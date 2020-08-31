@@ -20,6 +20,7 @@ import java.util.Map;
 /**
  * An editable {@link BootstrapConfigStore}.
  */
+@SuppressWarnings("deprecation")
 public interface EditableBootstrapConfigStore extends BootstrapConfigStore {
 
     /**

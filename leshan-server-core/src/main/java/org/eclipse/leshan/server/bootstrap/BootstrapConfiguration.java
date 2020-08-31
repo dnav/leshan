@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Sierra Wireless and others.
+ * Copyright (c) 2020 Sierra Wireless and others.
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -15,21 +15,20 @@
  *******************************************************************************/
 package org.eclipse.leshan.server.bootstrap;
 
-/**
- * Creates {@link BootstrapHandler}.
- * 
- * @see DefaultBootstrapHandler
- */
-public interface BootstrapHandlerFactory {
+import java.util.List;
 
-    /**
-     * Creates {@link BootstrapHandler}.
-     * 
-     * @param store the store containing bootstrap configuration.
-     * @param sender the class responsible to send LWM2M request during a bootstapSession.
-     * @param sessionManager the manager responsible to handle bootstrap session.
-     * @return the new {@link BootstrapHandler}.
-     */
-    BootstrapHandler create(BootstrapConfigurationStore store, LwM2mBootstrapRequestSender sender,
-            BootstrapSessionManager sessionManager);
+import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
+import org.eclipse.leshan.core.response.LwM2mResponse;
+
+public class BootstrapConfiguration {
+
+    private List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests;
+
+    public BootstrapConfiguration(List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests) {
+        this.requests = requests;
+    }
+
+    public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> getRequests() {
+        return requests;
+    }
 }

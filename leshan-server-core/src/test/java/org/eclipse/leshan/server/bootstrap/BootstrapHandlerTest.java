@@ -48,7 +48,8 @@ public class BootstrapHandlerTest {
     public void error_if_not_authorized() {
         // prepare bootstrapHandler with a session manager which does not authorized any session
         BootstrapSessionManager bsSessionManager = new MockBootstrapSessionManager(false);
-        BootstrapHandler bsHandler = new DefaultBootstrapHandler(null, null, bsSessionManager);
+        BootstrapHandler bsHandler = new DefaultBootstrapHandler((BootstrapConfigurationStore) null, null,
+                bsSessionManager);
 
         // Try to bootstrap
         BootstrapResponse response = bsHandler

@@ -53,14 +53,16 @@ import org.eclipse.leshan.server.bootstrap.BootstrapConfig.ACLConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig.ServerConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig.ServerSecurity;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfiguration;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapFailureCause;
 import org.eclipse.leshan.server.bootstrap.BootstrapHandler;
 import org.eclipse.leshan.server.bootstrap.BootstrapHandlerFactory;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
-import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
-import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapHandler;
+import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
+import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
 import org.eclipse.leshan.server.bootstrap.LwM2mBootstrapRequestSender;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
@@ -150,18 +152,18 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
         builder.setBootstrapHandlerFactory(new BootstrapHandlerFactory() {
 
             @Override
-            public BootstrapHandler create(BootstrapConfigStore store, LwM2mBootstrapRequestSender sender,
+            public BootstrapHandler create(BootstrapConfigurationStore store, LwM2mBootstrapRequestSender sender,
                     BootstrapSessionManager sessionManager) {
                 return new DefaultBootstrapHandler(store, sender, sessionManager) {
 
                     @Override
-                    protected void startBootstrap(final BootstrapSession session, final BootstrapConfig cfg) {
+                    protected void startBootstrap(final BootstrapSession session, final BootstrapConfiguration cfg) {
                         send(session, request, new SafeResponseCallback<BootstrapDiscoverResponse>(session) {
 
                             @Override
                             public void safeOnResponse(BootstrapDiscoverResponse response) {
                                 lastDiscoverAnswer = response;
-                                delete(session, cfg, new ArrayList<>(cfg.toDelete));
+                                sendRequest(session, cfg, new ArrayList<>(cfg.getRequests()));
                             }
                         }, new SafeErrorCallback(session) {
                             @Override
