@@ -44,15 +44,20 @@ import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.core.LwM2mId;
 import org.eclipse.leshan.core.SecurityMode;
+import org.eclipse.leshan.core.node.LwM2mNodeBuilder;
+import org.eclipse.leshan.core.node.LwM2mNodeBuilder.InstanceBuilder;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.request.BootstrapDiscoverRequest;
+import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
+import org.eclipse.leshan.core.request.BootstrapWriteRequest;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.response.BootstrapDiscoverResponse;
+import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig.ACLConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig.ServerConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig.ServerSecurity;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfiguration;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapFailureCause;
@@ -60,6 +65,7 @@ import org.eclipse.leshan.server.bootstrap.BootstrapHandler;
 import org.eclipse.leshan.server.bootstrap.BootstrapHandlerFactory;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
+import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapHandler;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
@@ -114,7 +120,7 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
     }
 
     private LeshanBootstrapServerBuilder createBootstrapBuilder(BootstrapSecurityStore securityStore,
-            BootstrapConfigStore bootstrapStore) {
+            BootstrapConfigurationStore bootstrapStore) {
         if (bootstrapStore == null) {
             bootstrapStore = unsecuredBootstrapStore();
         }
@@ -140,11 +146,12 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
         return builder;
     }
 
-    public void createBootstrapServer(BootstrapSecurityStore securityStore, BootstrapConfigStore bootstrapStore) {
+    public void createBootstrapServer(BootstrapSecurityStore securityStore,
+            BootstrapConfigurationStore bootstrapStore) {
         bootstrapServer = createBootstrapBuilder(securityStore, bootstrapStore).build();
     }
 
-    public void createBootstrapServer(BootstrapSecurityStore securityStore, BootstrapConfigStore bootstrapStore,
+    public void createBootstrapServer(BootstrapSecurityStore securityStore, BootstrapConfigurationStore bootstrapStore,
             final BootstrapDiscoverRequest request) {
         LeshanBootstrapServerBuilder builder = createBootstrapBuilder(securityStore, bootstrapStore);
 
@@ -303,11 +310,11 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
         };
     }
 
-    public BootstrapConfigStore unsecuredBootstrapStore() {
-        return new BootstrapConfigStore() {
+    public BootstrapConfigurationStore unsecuredBootstrapStore() {
+        return new BootstrapConfigurationStore() {
 
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
 
                 BootstrapConfig bsConfig = new BootstrapConfig();
 
@@ -333,12 +340,13 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
                 dmConfig.shortId = 2222;
                 bsConfig.servers.put(0, dmConfig);
 
-                return bsConfig;
+                return new BootstrapConfiguration(
+                        BootstrapUtil.convertToRequests(bsConfig, session.getContentFormat()));
             }
         };
     }
 
-    public BootstrapConfigStore deleteSecurityStore(Integer... objectToDelete) {
+    public BootstrapConfigurationStore deleteSecurityStore(Integer... objectToDelete) {
         String[] pathToDelete = new String[objectToDelete.length];
         for (int i = 0; i < pathToDelete.length; i++) {
             pathToDelete[i] = "/" + objectToDelete[i];
@@ -347,24 +355,25 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
         return deleteSecurityStore(pathToDelete);
     }
 
-    public BootstrapConfigStore deleteSecurityStore(final String... pathToDelete) {
-        return new BootstrapConfigStore() {
+    public BootstrapConfigurationStore deleteSecurityStore(final String... pathToDelete) {
+        return new BootstrapConfigurationStore() {
 
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
 
                 BootstrapConfig bsConfig = new BootstrapConfig();
                 bsConfig.toDelete = Arrays.asList(pathToDelete);
-                return bsConfig;
+                return new BootstrapConfiguration(
+                        BootstrapUtil.convertToRequests(bsConfig, session.getContentFormat()));
             }
         };
     }
 
-    public BootstrapConfigStore unsecuredWithAclBootstrapStore() {
-        return new BootstrapConfigStore() {
+    public BootstrapConfigurationStore unsecuredWithAclBootstrapStore() {
+        return new BootstrapConfigurationStore() {
 
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
 
                 BootstrapConfig bsConfig = new BootstrapConfig();
 
@@ -406,16 +415,17 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
                 aclConfig.AccessControlOwner = 2222;
                 bsConfig.acls.put(1, aclConfig);
 
-                return bsConfig;
+                return new BootstrapConfiguration(
+                        BootstrapUtil.convertToRequests(bsConfig, session.getContentFormat()));
             }
         };
     }
 
-    public BootstrapConfigStore pskBootstrapStore() {
-        return new BootstrapConfigStore() {
+    public BootstrapConfigurationStore pskBootstrapStore() {
+        return new BootstrapConfigurationStore() {
 
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
 
                 BootstrapConfig bsConfig = new BootstrapConfig();
 
@@ -443,45 +453,49 @@ public class BootstrapIntegrationTestHelper extends SecureIntegrationTestHelper 
                 dmConfig.shortId = 2222;
                 bsConfig.servers.put(0, dmConfig);
 
-                return bsConfig;
+                return new BootstrapConfiguration(
+                        BootstrapUtil.convertToRequests(bsConfig, session.getContentFormat()));
             }
         };
     }
 
-    public BootstrapConfigStore rpkBootstrapStore() {
-        return new BootstrapConfigStore() {
-
+    public BootstrapConfigurationStore rpkBootstrapStore() {
+        return new BootstrapConfigurationStore() {
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
 
-                BootstrapConfig bsConfig = new BootstrapConfig();
+                List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
 
                 // security for BS server
-                ServerSecurity bsSecurity = new ServerSecurity();
-                bsSecurity.serverId = 1111;
-                bsSecurity.bootstrapServer = true;
-                bsSecurity.uri = "coap://" + bootstrapServer.getUnsecuredAddress().getHostString() + ":"
-                        + bootstrapServer.getUnsecuredAddress().getPort();
-                bsSecurity.securityMode = SecurityMode.NO_SEC;
-                bsConfig.security.put(0, bsSecurity);
+                InstanceBuilder bsSecurity = LwM2mNodeBuilder.instance(0);
+                bsSecurity.set(LwM2mId.SEC_SERVER_ID, 1111);
+                bsSecurity.set(LwM2mId.SEC_BOOTSTRAP, true);
+                bsSecurity.set(LwM2mId.SEC_SERVER_URI, "coap://" + bootstrapServer.getUnsecuredAddress().getHostString()
+                        + ":" + bootstrapServer.getUnsecuredAddress().getPort());
+                bsSecurity.set(LwM2mId.SEC_SECURITY_MODE, SecurityMode.NO_SEC.code);
+                requests.add(new BootstrapWriteRequest(new LwM2mPath(LwM2mId.SECURITY, 0), bsSecurity.create(),
+                        session.getContentFormat()));
 
                 // security for DM server
-                ServerSecurity dmSecurity = new ServerSecurity();
-                dmSecurity.uri = "coaps://" + server.getUnsecuredAddress().getHostString() + ":"
-                        + server.getSecuredAddress().getPort();
-                dmSecurity.serverId = 2222;
-                dmSecurity.securityMode = SecurityMode.RPK;
-                dmSecurity.publicKeyOrId = clientPublicKey.getEncoded();
-                dmSecurity.secretKey = clientPrivateKey.getEncoded();
-                dmSecurity.serverPublicKey = serverPublicKey.getEncoded();
-                bsConfig.security.put(1, dmSecurity);
+                InstanceBuilder dmSecurity = LwM2mNodeBuilder.instance(1);
+                dmSecurity.set(LwM2mId.SEC_SERVER_URI, "coaps://" + server.getUnsecuredAddress().getHostString() + ":"
+                        + server.getSecuredAddress().getPort());
+                dmSecurity.set(LwM2mId.SEC_SERVER_ID, 2222);
+                dmSecurity.set(LwM2mId.SEC_BOOTSTRAP, false);
+                dmSecurity.set(LwM2mId.SEC_SECURITY_MODE, SecurityMode.RPK.code);
+                dmSecurity.set(LwM2mId.SEC_PUBKEY_IDENTITY, clientPublicKey.getEncoded());
+                dmSecurity.set(LwM2mId.SEC_SECRET_KEY, clientPrivateKey.getEncoded());
+                dmSecurity.set(LwM2mId.SEC_SERVER_PUBKEY, serverPublicKey.getEncoded());
+                requests.add(new BootstrapWriteRequest(new LwM2mPath(LwM2mId.SECURITY, 1), dmSecurity.create(),
+                        session.getContentFormat()));
 
                 // DM server
-                ServerConfig dmConfig = new ServerConfig();
-                dmConfig.shortId = 2222;
-                bsConfig.servers.put(0, dmConfig);
+                InstanceBuilder dmConfig = LwM2mNodeBuilder.instance(0);
+                dmConfig.set(LwM2mId.SRV_SERVER_ID, 2222);
+                requests.add(new BootstrapWriteRequest(new LwM2mPath(LwM2mId.SERVER, 0), dmConfig.create(),
+                        session.getContentFormat()));
 
-                return bsConfig;
+                return new BootstrapConfiguration(requests);
             }
         };
     }

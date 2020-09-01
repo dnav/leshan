@@ -20,11 +20,9 @@ import static org.junit.Assert.*;
 import java.util.List;
 
 import org.eclipse.leshan.core.request.Identity;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfiguration;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
-import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
-import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.junit.Before;
@@ -38,9 +36,10 @@ public class LeshanBootstrapServerBuilderTest {
     @Before
     public void start() {
         builder = new LeshanBootstrapServerBuilder();
-        builder.setConfigStore(new BootstrapConfigStore() {
+        builder.setConfigStore(new BootstrapConfigurationStore() {
+
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
                 return null;
             }
         });

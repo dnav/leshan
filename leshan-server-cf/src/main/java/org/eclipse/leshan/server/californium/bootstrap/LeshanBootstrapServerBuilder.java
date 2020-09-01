@@ -220,25 +220,7 @@ public class LeshanBootstrapServerBuilder {
     }
 
     /**
-     * Set the {@link BootstrapConfigStore} containing bootstrap configuration to apply to each devices.
-     * <p>
-     * By default an {@link InMemoryBootstrapConfigStore} is used.
-     * <p>
-     * See {@link BootstrapConfig} to see what is could be done during a bootstrap session.
-     * 
-     * @param configStore the bootstrap configuration store.
-     * @return the builder for fluent Bootstrap Server creation.
-     * 
-     * @deprecated use {@link #setConfigStore(BootstrapConfigurationStore)} instead
-     */
-    @Deprecated
-    public LeshanBootstrapServerBuilder setConfigStore(BootstrapConfigStore configStore) {
-        this.configStore = new BootstrapConfigurationStoreAdapter(configStore);
-        return this;
-    }
-
-    /**
-     * Set the {@link BootstrapConfigStore} containing bootstrap configuration to apply to each devices.
+     * Set the {@link BootstrapConfigurationStore} containing bootstrap configuration to apply to each devices.
      * <p>
      * By default an {@link InMemoryBootstrapConfigStore} is used.
      * <p>

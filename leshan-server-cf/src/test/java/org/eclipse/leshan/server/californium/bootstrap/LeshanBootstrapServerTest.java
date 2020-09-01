@@ -18,13 +18,17 @@ package org.eclipse.leshan.server.californium.bootstrap;
 import static org.junit.Assert.assertEquals;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.eclipse.leshan.core.request.BootstrapDeleteRequest;
+import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.response.BootstrapResponse;
+import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.SendableResponse;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfiguration;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapHandler;
 import org.eclipse.leshan.server.bootstrap.BootstrapHandlerFactory;
@@ -50,13 +54,13 @@ public class LeshanBootstrapServerTest {
                 return bsHandler;
             }
         });
-        builder.setConfigStore(new BootstrapConfigStore() {
+        builder.setConfigStore(new BootstrapConfigurationStore() {
 
             @Override
-            public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
-                BootstrapConfig config = new BootstrapConfig();
-                config.toDelete.add("/");
-                return config;
+            public BootstrapConfiguration get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
+                List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
+                requests.add(new BootstrapDeleteRequest());
+                return new BootstrapConfiguration(requests);
             }
         });
         return builder.build();
